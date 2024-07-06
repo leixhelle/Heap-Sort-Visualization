@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heap Sort Visualization</title>
+    <style>
+        body {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-style: italic;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient( to top right, #f5eb8fb7,#fff89a,#e1f574,#fff89a, #f5eb8fb7);
+            font-weight: bold;
+        }
+        .title {
+            font-size: 50px;
+            font-weight: bold;
+            font-family: cursive;
+        }
+
+        .container {
+            text-align: center;
+            margin: 0px;
+            padding: 0px;
+            height: 100vh;
+        }
+
+        #array-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 250px;
+            margin: 20px 10px;
+            padding-top: 30px;
+            width: 100%;
+            max-width: 1000px;
+            overflow: hidden;
+            border: 2px solid #4e0755; /* Added border for the entire container */
+            border-radius: 10px; /* Added border radius for the container */
+        }
+
+        #array-input {
+            border: solid 2px;
+            border-color: #4e0755;
+        }
+
+        .bar {
+            background-color: #b434db;
+            display: inline-block;
+            text-align: center;
+            text-shadow: #080808;
+            color: rgb(211, 203, 203);
+            margin: 3px;
+            padding-top: 10px;
+            border: solid 2px; /* Added border to the bars */
+            border-color: #4e0755;
+            width: 90%; /* Makes the chart responsive to the width of the viewport */
+            height: 50vh; /* Makes the chart responsive to the height of the viewport */
+            
+        }
+
+        input[type="text"] {
+            margin: 10px;
+            padding: 5px;
+            width: 300px;
+            border-radius: 4px;
+        }
+
+        input[type="range"] {
+            margin: 10px;
+            padding: 5px;
+        }
+
+        button {
+            padding: 8px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 10px;
+            border-style: double;
+            border-color: #882377;
+            font-style: italic;
+            font-family: cursive;
+            color: #080808;
+            background-color: #ae8cca;
+            margin-top: 3px;
+        }
+
+        #step-container {
+            margin-top: 8px;
+            font-size: 16px;
+        }
+
+        #heapify-label {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #665858;
+            font-weight: lighter;
+        }
+
+        #speed-input {
+            border: solid 2px;
+            border-color: #4e0755;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="title">Heap Sort Heapicayei</p>
+        <div>
+            <label for="array-input">Enter numbers (comma separated): </label>
+            <input type="text" id="array-input" placeholder="e.g., 70, 50, 30, 20">
+        </div>
+        <div>
+            <label for="speed-input">Speed (ms): </label>
+            <input type="range" id="speed-input" min="50" max="2000" value="500">
+            <span id="speed-value">500ms</span>
+        </div>
+        <button id="sort-button">Sort</button>
+        <div id="array-container"></div>
+        <div id="step-container"></div>
+        <div id="heapify-label"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const arrayContainer = document.getElementById('array-container');
+            const sortButton = document.getElementById('sort-button');
+            const arrayInput = document.getElementById('array-input');
+            const speedInput = document.getElementById('speed-input');
+            const speedValue = document.getElementById('speed-value');
+            const stepContainer = document.getElementById('step-container');
+            const heapifyLabel = document.getElementById('heapify-label');
+
+            let array = [];
+
+            speedInput.addEventListener('input', () => {
+                speedValue.textContent = `${speedInput.value}ms`;
+            });
+
+            function createBars(array) {
+                arrayContainer.innerHTML = '';
+                const maxValue = Math.max(...array);
+                const containerWidth = arrayContainer.clientWidth;
+                const barWidth = Math.floor(containerWidth / array.length) - 6; // Adjusting for margins and borders
+
+                array.forEach(value => {
+                    const bar = document.createElement('div');
+                    bar.classList.add('bar');
+                    bar.style.height = `${(value / maxValue) * 100}%`; // Scale height
+                    bar.style.width = `${barWidth}px`; // Set width dynamically
+                    bar.innerText = value;
+                    arrayContainer.appendChild(bar);
+                });
+            }
+
+            function updateStep(message) {
+                stepContainer.innerText = message;
+            }
+
+            function updateHeapifyLabel(message) {
+                heapifyLabel.innerText = message;
+            }
+
+            function swap(array, i, j) {
+                const temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async function heapify(array, length, i, speed) {
+                let largest = i;
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+
+                updateHeapifyLabel(`Heapifying: Comparing index ${i} with children ${left} and ${right}`);
+
+                if (left < length && array[left] > array[largest]) {
+                    largest = left;
+                    updateHeapifyLabel(`Left child ${array[left]} is larger than current largest ${array[largest]}`);
+                }
+
+                if (right < length && array[right] > array[largest]) {
+                    largest = right;
+                    updateHeapifyLabel(`Right child ${array[right]} is larger than current largest ${array[largest]}`);
+                }
+
+                if (largest !== i) {
+                    swap(array, i, largest);
+                    updateHeapifyLabel(`Swapping elements ${array[i]} and ${array[largest]}`);
+                    createBars(array);
+                    await delay(speed);
+                    await heapify(array, length, largest, speed);
+                } else {
+                    updateHeapifyLabel(`Heapifying step complete for index ${i}`);
+                    await delay(speed);
+                    updateHeapifyLabel('');
+                }
+            }
+
+            async function heapSort(array, speed) {
+                const length = array.length;
+                for (let i = Math.floor(length / 2) - 1; i >= 0; i--) {
+                    updateStep(`Building heap: Heapifying from index ${i}`);
+                    await heapify(array, length, i, speed);
+                }
+
+                for (let i = length - 1; i > 0; i--) {
+                    swap(array, 0, i);
+                    updateStep(`Swapping root with last element: Swapping ${array[0]} and ${array[i]}`);
+                    createBars(array);
+                    await delay(speed);
+                    await heapify(array, i, 0, speed);
+                }
+
+                updateStep(`Heap sort complete!`);
+            }
+
+            sortButton.addEventListener('click', async () => {
+                const input = arrayInput.value.split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
+                if (input.length === 0) {
+                    alert('Please enter a valid array of numbers.');
+                    return;
+                }
+                array = input;
+                const speed = parseInt(speedInput.value);
+                sortButton.disabled = true;
+                await heapSort(array, speed);
+                sortButton.disabled = false;
+            });
+
+            createBars(array);
+        });
+    </script>
+</body>
+</html>
